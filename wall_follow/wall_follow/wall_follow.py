@@ -26,8 +26,8 @@ class WallFollow(Node):
             10)
 
         # PID gains
-        self.kp = 1.2
-        self.kd = 0.3
+        self.kp = 0.9
+        self.kd = 0.2
         self.ki = 0.0
 
         print("WallFollowi in init. fuck this")
@@ -36,33 +36,34 @@ class WallFollow(Node):
         self.integral = 0.0
 
         # Desired distance to the wall (left side)
-        self.desired_dist = 1.0
+        self.desired_dist = 0.7
 
         # Lookahead for prediction (distance in meters the car travels)
-        self.lookahead_dist = 1.0
+        self.lookahead_dist = 1.2
 
-    def get_range(self, range_data, angle, msg):
-        """
-        Get the lidar range at a specific angle.
-        Angle is in radians. Positive = left, negative = right.
-        """
-        index = int((angle - msg.angle_min) / msg.angle_increment)
-        if 0 <= index < len(range_data):
-            dist = range_data[index]
-            if np.isfinite(dist):
-                return dist
-        return float('inf')
+        # index of ray b
+        # angle at which b will be = 45degrees
+        # 0.25 = resol of hukoyo lidar
+        self.ind_b = int(45 / 0.25)
+        
+        # index of ray a (50 degrees angle with b)
+        self.ind_a = int((45+50) / 0.25)
+
 
     def get_error(self, range_data, msg):
         """
         Estimate the future distance error to the left wall.
         """
         theta = np.radians(50)  # angle between a and b
-        a = self.get_range(range_data, np.radians(70), msg)  # front-left
-        b = self.get_range(range_data, np.radians(110), msg)  # left
+        a = range_data[self.ind_a]
+        b = range_data[self.ind_b]
 
-        if np.isinf(a) or np.isinf(b):
-            return 0.0
+        # print(f"Distance at a: {a}")
+        # print(f"Distance at b: {b}")
+
+
+        # if np.isinf(a) or np.isinf(b):
+        #     return 0.0
 
         # Calculate angle to the wall (alpha)
         num = a * np.cos(theta) - b
@@ -92,15 +93,17 @@ class WallFollow(Node):
     def compute_velocity(self, steering_angle):
         angle_deg = np.abs(np.degrees(steering_angle))
         if angle_deg < 10:
-            return 1.5
+            return 0.35
         elif angle_deg < 20:
-            return 1.0
+            return 0.2
         else:
-            return 0.5
+            return 0.15
 
     def scan_callback(self, msg):
         error = self.get_error(msg.ranges, msg)
+        # print(error)
         steering_angle = self.pid_control(error)
+        print(steering_angle)
         speed = self.compute_velocity(steering_angle)
 
         # drive_msg = AckermannDriveStamped()
