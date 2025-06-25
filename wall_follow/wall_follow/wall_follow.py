@@ -26,8 +26,8 @@ class WallFollow(Node):
             10)
 
         # PID gains
-        self.kp = 0.9
-        self.kd = 0.2
+        self.kp = 1.0
+        self.kd = 0.3
         self.ki = 0.0
 
         print("WallFollowi in init. fuck this")
@@ -93,7 +93,7 @@ class WallFollow(Node):
     def compute_velocity(self, steering_angle):
         angle_deg = np.abs(np.degrees(steering_angle))
         if angle_deg < 10:
-            return 0.35
+            return 0.30
         elif angle_deg < 20:
             return 0.2
         else:

@@ -245,7 +245,11 @@ def bridge(sid, data):
         # LIDAR
         lidar_scan_rate = float(data["V1 LIDAR Scan Rate"])
         lidar_range_array = np.fromstring(data["V1 LIDAR Range Array"], dtype=float, sep=' ')
-        lidar_intensity_array = np.fromstring(data["V1 LIDAR Intensity Array"], dtype=float, sep=' ')
+        # print(data.keys())
+        try:    # added by zhr
+            lidar_intensity_array = np.fromstring(data["V1 LIDAR Intensity Array"], dtype=float, sep=' ')
+        except:
+            lidar_intensity_array = np.zeros(lidar_range_array.shape)
         publish_lidar_scan(lidar_scan_rate, lidar_range_array, lidar_intensity_array)
         # Cameras
         front_camera_image = np.asarray(Image.open(BytesIO(base64.b64decode(data["V1 Front Camera Image"]))))
@@ -270,8 +274,8 @@ def main():
     rclpy.init() # Initialize ROS 2 communication for this context
     autodrive_incoming_bridge = rclpy.create_node('autodrive_incoming_bridge') # Create ROS 2 node
     qos_profile = QoSProfile( # Ouality of Service profile
-        reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_RELIABLE, # Reliable (not best effort) communication
-        history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST, # Keep/store only up to last N samples
+        reliability=QoSReliabilityPolicy.RELIABLE, # Reliable (not best effort) communication
+        history=QoSHistoryPolicy.KEEP_LAST, # Keep/store only up to last N samples
         depth=1 # Queue (buffer) size/depth (only honored if the “history” policy was set to “keep last”)
         )
     cv_bridge = CvBridge() # ROS bridge object for opencv library to handle image data
@@ -279,10 +283,10 @@ def main():
                   for e in config.pub_sub_dict.publishers} # Publishers
 
     # Recursive operations while node is alive
-    # while rclpy.ok(): -- edited
-    app = socketio.WSGIApp(sio) # Create socketio WSGI application
-    pywsgi.WSGIServer(('', 4567), app, handler_class=WebSocketHandler).serve_forever() # Deploy as a gevent WSGI server            
-    rclpy.spin_once(autodrive_incoming_bridge) # Spin the node once
+    while rclpy.ok(): # -- edited
+        app = socketio.WSGIApp(sio) # Create socketio WSGI application
+        pywsgi.WSGIServer(('', 4567), app, handler_class=WebSocketHandler).serve_forever() # Deploy as a gevent WSGI server            
+        rclpy.spin_once(autodrive_incoming_bridge) # Spin the node once
     
     autodrive_incoming_bridge.destroy_node() # Explicitly destroy the node
     rclpy.shutdown() # Shutdown this context
