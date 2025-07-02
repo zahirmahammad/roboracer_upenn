@@ -283,10 +283,10 @@ def main():
                   for e in config.pub_sub_dict.publishers} # Publishers
 
     # Recursive operations while node is alive
-    while rclpy.ok(): # -- edited
-        app = socketio.WSGIApp(sio) # Create socketio WSGI application
-        pywsgi.WSGIServer(('', 4567), app, handler_class=WebSocketHandler).serve_forever() # Deploy as a gevent WSGI server            
-        rclpy.spin_once(autodrive_incoming_bridge) # Spin the node once
+    # while rclpy.ok(): # -- edited
+    app = socketio.WSGIApp(sio) # Create socketio WSGI application
+    pywsgi.WSGIServer(('', 4567), app, handler_class=WebSocketHandler).serve_forever() # Deploy as a gevent WSGI server            
+    rclpy.spin_once(autodrive_incoming_bridge) # Spin the node once
     
     autodrive_incoming_bridge.destroy_node() # Explicitly destroy the node
     rclpy.shutdown() # Shutdown this context

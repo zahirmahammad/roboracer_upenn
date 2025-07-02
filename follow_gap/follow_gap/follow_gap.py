@@ -3,7 +3,7 @@ from rclpy.node import Node
 
 import numpy as np
 from sensor_msgs.msg import LaserScan
-from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
+# from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 from std_msgs.msg import Float32
 
 class ReactiveFollowGap(Node):
@@ -59,8 +59,8 @@ class ReactiveFollowGap(Node):
 
         # block the back array of the LiDAR scan
         # ----------------------------------------------------
-        proc_ranges[:int(30/0.25)] = 0.0    # took off 15 degrees to only consider back rays
-        proc_ranges[int(215/0.25):] = 0.0
+        proc_ranges[:int(45/0.25)] = 0.0    # took off 15 degrees to only consider back rays
+        proc_ranges[int(225/0.25):] = 0.0
         # ----------------------------------------------------
 
 
@@ -103,7 +103,7 @@ class ReactiveFollowGap(Node):
 
                 # Angular width to cover the car width at this range
                 print(f"close_range: {close_range}")
-                angle_width_rad = np.arcsin((0.8 / 2) / close_range)
+                angle_width_rad = np.arcsin((0.9 / 2) / close_range)
                 if np.isnan(angle_width_rad):
                     print("Angle width is NaN")
                     continue
@@ -178,11 +178,11 @@ class ReactiveFollowGap(Node):
     def compute_velocity(self, steering_angle):
         angle_deg = np.abs(np.degrees(steering_angle))
         if angle_deg < 10:
-            return 0.33
+            return 0.9
         elif angle_deg < 20:
-            return 0.28
+            return 0.5
         else:
-            return 0.2
+            return 0.35
 
     def lidar_callback(self, data):
         """ Process each LiDAR scan as per the Follow Gap algorithm & publish an AckermannDriveStamped Message
